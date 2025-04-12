@@ -69,10 +69,16 @@ bool isIdentifier(const string& str) {
 
 bool isNumber(const string& str) {
     bool hasDecimal = false;
-    for (char c : str) {
+    bool hasExponent = false;
+    for (int i = 0 ; i < str.size() ; i++) {
+        char c = str[i];
         if (c == '.') {
-            if (hasDecimal) return false;
+            if (hasDecimal || hasExponent || i == str.size() - 1) return false;
             hasDecimal = true;
+        }
+        else if(tolower(c) == 'e'){
+            if(hasExponent || c == str[size(str)]) return false;
+            hasExponent = true;
         }
         else if (!isdigit(c)) {
             return false;
@@ -88,6 +94,8 @@ vector<Token> tokenize(const string& source) {
     State state = State::START;
     char stringQuote = '\0';
     bool escapeNext = false;
+    bool hasDecimal = false;
+    bool hasExponent = false;
 
     auto flushCurrentToken = [&]() {
         if (!currentToken.empty()) {
@@ -104,6 +112,8 @@ vector<Token> tokenize(const string& source) {
             }
             currentToken.clear();
         }
+        hasDecimal = false;
+        hasExponent = false;
     };
 
     for (size_t i = 0; i < source.size(); i++) {
@@ -165,9 +175,17 @@ vector<Token> tokenize(const string& source) {
                 break;
 
             case State::IN_NUMBER:
-                if (isdigit(c) || c == '.') {
+                
+                if (isdigit(c)) {
                     currentToken += c;
-                } else {
+                }
+                else if(c == '.' && !hasDecimal && !hasExponent && isdigit(source[i+1])){
+                    hasDecimal = true;
+                    currentToken += c;
+                }else if(tolower(c) == 'e' && !hasExponent && isdigit(source[i-1]) && isdigit(source[i+1])){
+                    hasExponent = true;
+                    currentToken += c;
+                }else {
                     flushCurrentToken();
                     state = State::START;
                     i--; // Reprocess this character
