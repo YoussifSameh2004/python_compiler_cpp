@@ -90,6 +90,7 @@ bool isNumber(const string& str) {
 vector<Token> tokenize(const string& source) {
     vector<Token> tokens;
     string currentToken;
+    Token previousToken = {"","",-1};
     int lineNumber = 1;
     State state = State::START;
     char stringQuote = '\0';
@@ -109,6 +110,7 @@ vector<Token> tokenize(const string& source) {
             
             if (!type.empty()) {
                 tokens.push_back({type, currentToken, lineNumber});
+                previousToken = {type, currentToken, lineNumber};
             }
             currentToken.clear();
         }
@@ -134,7 +136,7 @@ vector<Token> tokenize(const string& source) {
                     state = State::IN_IDENTIFIER;
                     currentToken += c;
                 }
-                else if (isdigit(c)) {
+                else if (isdigit(c) || (c == '-' && previousToken.type == "OPERATOR")) {
                     state = State::IN_NUMBER;
                     currentToken += c;
                 }
@@ -182,8 +184,10 @@ vector<Token> tokenize(const string& source) {
                 else if(c == '.' && !hasDecimal && !hasExponent && isdigit(source[i+1])){
                     hasDecimal = true;
                     currentToken += c;
-                }else if(tolower(c) == 'e' && !hasExponent && isdigit(source[i-1]) && isdigit(source[i+1])){
+                }else if(tolower(c) == 'e' && !hasExponent && isdigit(source[i-1]) && (isdigit(source[i+1]) || (source[i+1] == '-' && isdigit(source[i+2])))){
                     hasExponent = true;
+                    currentToken += c;
+                }else if(c == '-' && tolower(source[i-1]) == 'e'){
                     currentToken += c;
                 }else {
                     flushCurrentToken();
