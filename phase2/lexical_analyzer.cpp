@@ -404,6 +404,14 @@ vector<Token> tokenize(const string& source) {
                     currentToken += c;
                     state = State::IN_NUMBER;
                 }
+                else if (isDelimiter(std::string(1, c))) {
+                    if (c == '.' && i + 2 < source.size() && source[i + 1] == '.' && source[i + 2] == '.') {
+                        tokens.push_back({"DELIMITER", "...", lineNumber});
+                        i += 2;
+                    } else {
+                        tokens.push_back({"DELIMITER", std::string(1, c), lineNumber});
+                    }
+                }
                 else if (c == ':') {
                     tokenStartLine = lineNumber;
                     currentToken += c;
@@ -475,14 +483,6 @@ vector<Token> tokenize(const string& source) {
                 
                     if (c == '=' || c == '(') {
                         potentialMultilineComment = false;
-                    }
-                }
-                else if (isDelimiter(std::string(1, c))) {
-                    if (c == '.' && i + 2 < source.size() && source[i + 1] == '.' && source[i + 2] == '.') {
-                        tokens.push_back({"DELIMITER", "...", lineNumber});
-                        i += 2;
-                    } else {
-                        tokens.push_back({"DELIMITER", std::string(1, c), lineNumber});
                     }
                 }
                 else {
